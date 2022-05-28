@@ -15,11 +15,7 @@ namespace AUDIOTEST
 
         static int trig = 1;
 
-        private static void wait()
-        {
-            Thread.Sleep(pause);
-        }
-
+      
 
 
         static void pauseCalc(int tempo)
