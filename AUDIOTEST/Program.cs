@@ -1,121 +1,81 @@
-﻿using NAudio.Wave;
+﻿using NAudio.CoreAudioApi;
+using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System;
 using System.Threading;
 
 namespace AUDIOTEST
 {
+
     class Program
     {
         static Random rnd = new Random();
+        static MixingSampleProvider mixer;
+        static WasapiOut waveOut;
 
-        static int pause = 0;
-
-        static int buffer = 0;
-
-        static int trig = 1;
-
-      
-
-
-        static void pauseCalc(int tempo)
+        static float PickFreq()
         {
-            int pause = tempo * 100 / 60;
-        }
-
-
-        static double PickFreq()
-        {
-            int temp = rnd.Next(1, 6);
+            int temp = rnd.Next(1, 7);
             if (temp == 1)
-                return 440;
+                return 659.25f;
             else if (temp == 2)
                 return 880;
             else if (temp == 3)
-                return 1396.91;
+                return 1396.91f;
             else if (temp == 4)
-                return 1318.51;
+                return 1318.51f;
+            else if (temp == 5)
+                return 987.77f;
             else
-                return 1046.50;
+                return 1046.50f;
         }
-
-        static void playHigh(int channel)
+        static AdsrSampleProvider CreateNote(float freq, SignalGeneratorType signal)
         {
+            var signalGenerator1 = new SignalGenerator(44100, 1);
+            signalGenerator1.Gain = 0.3;
+            signalGenerator1.Type = signal;
+            signalGenerator1.Frequency = freq;
 
-            while (true)
-            {
-                if (trig == channel)
-                {
-                    var sineSeconds = new SignalGenerator()
-                    {
-                        Gain = 0.2,
-                        Frequency = PickFreq(),
-                        Type = SignalGeneratorType.Sin
-                    }
-               .Take(TimeSpan.FromMilliseconds(125/2));
+            var signalGenerator2 = new SignalGenerator(44100, 1);
+            signalGenerator2.Gain = 0.2;
+            signalGenerator2.Type = SignalGeneratorType.SawTooth;
+            signalGenerator2.Frequency = freq / 8;
 
-                    using (var wo = new WaveOutEvent())
-                    {
-                        wo.Init(sineSeconds);
-                        wo.Play();
-                        while (wo.PlaybackState == PlaybackState.Playing)
-                        {
-                            Thread.Sleep(250);
-                        }
-                    }
-                }
-            }
+            var mixerr = new MixingSampleProvider(new[] { signalGenerator1, signalGenerator2 });
+
+            var adsr = new AdsrSampleProvider(mixerr);
+            adsr.AttackSeconds = 1f;
+            adsr.ReleaseSeconds = 0.7f;
+            return adsr;
         }
 
-        static void playLow(int channel)
-        {
-
-            while (true)
-            {
-                if (trig == channel && rnd.Next(1,3)==1)
-                {
-                    var sineSeconds = new SignalGenerator()
-                    {
-                        Gain = 0.1,
-                        Frequency = PickFreq()/4,
-                        Type = SignalGeneratorType.Sin
-                    }
-           .Take(TimeSpan.FromMilliseconds(125/2));
-
-                    using (var wo = new WaveOutEvent())
-                    {
-                        wo.Init(sineSeconds);
-                        wo.Play();
-                        while (wo.PlaybackState == PlaybackState.Playing)
-                        {
-                            Thread.Sleep(125/2);
-                        }
-                    }
-                }
-            }
-        }
-
-       static void newTrig()
+        static void PlayNote(SignalGeneratorType signal)
         {
             while (true)
             {
-                Thread.Sleep(125);
-                trig = rnd.Next(1, 4);
+                var adsr = CreateNote(PickFreq(), signal);
+                Thread.Sleep(500);
+                mixer.AddMixerInput(adsr); Thread.Sleep(500); mixer.RemoveMixerInput(adsr);
             }
         }
-            static void Main(string[] args)
-            {
-                int tempo = 120;
-                pauseCalc(tempo);
 
-                new Thread(() => playHigh( 1)).Start();
 
-                new Thread(() => playLow( 2)).Start();
+        static void Main(string[] args)
+        {
+            waveOut = new WasapiOut(AudioClientShareMode.Shared, 50);
 
-            new Thread(() => playLow(3)).Start();
-            new Thread(() => newTrig()).Start();
+            mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 1));
 
-        }
+
+
+            mixer.ReadFully = true;
+            waveOut.Init(mixer);
+
+            waveOut.Play();
+            new Thread(() => PlayNote(SignalGeneratorType.SawTooth)).Start();
+            new Thread(() => PlayNote(SignalGeneratorType.White)).Start();
+            new Thread(() => PlayNote(SignalGeneratorType.Square)).Start();
+            Console.ReadKey();
         }
     }
-
+}
