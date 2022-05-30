@@ -9,7 +9,8 @@ namespace AUDIOTEST
 
     class Program
     {
-        static int wait=250/3;
+        static int bpm = 800;
+        static int wait =60000/bpm;
         static Random rnd = new Random();
         static MixingSampleProvider mixer;
         static WasapiOut waveOut;
@@ -33,19 +34,19 @@ namespace AUDIOTEST
         static AdsrSampleProvider CreateNote(float freq, SignalGeneratorType signal)
         {
             var signalGenerator1 = new SignalGenerator(44100, 1);
-            signalGenerator1.Gain = 0.1;
+            signalGenerator1.Gain = 0.05;
             signalGenerator1.Type = signal;
-            signalGenerator1.Frequency = freq;
+            signalGenerator1.Frequency = freq/2;
 
             var signalGenerator2 = new SignalGenerator(44100, 1);
             signalGenerator2.Gain = 0.2;
             signalGenerator2.Type = SignalGeneratorType.SawTooth;
             signalGenerator2.Frequency = freq / 8;
 
-            var mixerr = new MixingSampleProvider(new[] { signalGenerator1, signalGenerator2 });
+            var mixerr = new MixingSampleProvider(new[] { signalGenerator1,signalGenerator2 });
 
             var adsr = new AdsrSampleProvider(mixerr);
-            adsr.AttackSeconds = 0f;
+            adsr.AttackSeconds = 0.05f;
             adsr.ReleaseSeconds = 0.7f;
             return adsr;
         }
@@ -64,28 +65,25 @@ namespace AUDIOTEST
             }
         }
         static void PlayPerc()
-        {
+        {//TO DO ADD SAMPLE INSTEAD OF GENERATIN A SOUND YOU FUCKING NERD
             while (true)
             {
                 var signalGenerator1 = new SignalGenerator(44100, 1);
-                signalGenerator1.Gain = 0.5;
-                signalGenerator1.Frequency =250; // start frequency of the sweep
-                signalGenerator1.FrequencyEnd = 10;
+                signalGenerator1.Gain = 0.3;
+                signalGenerator1.Frequency =50; // start frequency of the sweep
+                signalGenerator1.FrequencyEnd = PickFreq()/2;
                 signalGenerator1.Type = SignalGeneratorType.Sweep; 
-                signalGenerator1.SweepLengthSecs = 0.5; 
-                var signalGenerator2 = new SignalGenerator(44100, 1);
-                signalGenerator2.Gain = 0.05;
-                signalGenerator2.Type = SignalGeneratorType.Pink;
-                signalGenerator2.Frequency = 100;
-                var mixerr = new MixingSampleProvider(new[] { signalGenerator1, signalGenerator2 });
+                signalGenerator1.SweepLengthSecs =0.1; 
+              
+                var mixerr = new MixingSampleProvider(new[] { signalGenerator1 });
 
                 var adsr = new AdsrSampleProvider(mixerr);
-                adsr.AttackSeconds = 0.2f;
-                adsr.ReleaseSeconds = 0.9f;
-                Thread.Sleep(wait);
+                adsr.AttackSeconds = 0.3f;
+                adsr.ReleaseSeconds =0.5f;
+                Thread.Sleep(2*wait/3);
               
                     mixer.AddMixerInput(adsr);
-                Thread.Sleep(wait);
+                Thread.Sleep(2 * wait /3);
 
                 mixer.RemoveMixerInput(adsr);
             }
@@ -104,8 +102,11 @@ namespace AUDIOTEST
 
             waveOut.Play();
             new Thread(() => PlayNote(SignalGeneratorType.SawTooth)).Start();
-            new Thread(() => PlayNote(SignalGeneratorType.White)).Start();
-            new Thread(() => PlayPerc()).Start();
+            new Thread(() => PlayNote(SignalGeneratorType.Square)).Start(); 
+            new Thread(() => PlayNote(SignalGeneratorType.Triangle)).Start();
+            new Thread(() => PlayNote(SignalGeneratorType.Sin)).Start(); 
+    
+           // new Thread(() => PlayPerc()).Start();
           
             Console.ReadKey();
         }
