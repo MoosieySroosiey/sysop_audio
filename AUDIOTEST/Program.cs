@@ -3,7 +3,7 @@ using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System;
 using System.Threading;
-
+//zapis audio do .wav dodaj
 namespace AUDIOTEST
 {
 
@@ -65,7 +65,7 @@ namespace AUDIOTEST
             }
         }
         static void PlayPerc()
-        {//TO DO ADD SAMPLE INSTEAD OF GENERATIN A SOUND YOU FUCKING NERD
+        {//TO DO ADD SAMPLE INSTEAD OF GENERATIN A SOUND
             while (true)
             {
                 var signalGenerator1 = new SignalGenerator(44100, 1);
