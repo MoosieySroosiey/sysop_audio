@@ -9,8 +9,8 @@ namespace AUDIOTEST
 
     class Program
     {
-        static int bpm = 800;
-        static int wait =60000/bpm;
+        static int bpm = 100 ;
+        static int wait =60000/bpm/4;
         static Random rnd = new Random();
         static MixingSampleProvider mixer;
         static WasapiOut waveOut;
